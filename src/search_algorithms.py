@@ -23,96 +23,107 @@ def random_move(start, goal, obstacles, rows, cols):
     return []
 
 def bfs(start, goal, obstacles, rows, cols):
-    queue = deque([(start, [])])
-    visited = set([start])
-    while queue:
-        current, path = queue.popleft()
-        if current == goal:
+    q = deque([(start, [])]) # (position, path)
+    v = set([start])
+    while q is not None:
+        cur, path = q.popleft()
+        # Path found
+        if cur == goal:
             return path
-        for direction in DIRECTIONS:
-            new_pos = (current[0] + direction[0], current[1] + direction[1])
-            if (0 <= new_pos[0] < rows and 0 <= new_pos[1] < cols and
-                new_pos not in obstacles and new_pos not in visited):
-                visited.add(new_pos)
-                queue.append((new_pos, path + [direction]))
+        for dir in DIRECTIONS:
+            new = (cur[0] + dir[0], cur[1] + dir[1])
+            if (0 <= new[0] < rows and 0 <= new[1] < cols and
+                new not in obstacles and new not in v):
+                v.add(new)
+                q.append((new, path + [dir]))
+    # No path found
     return []
 
 def dfs(start, goal, obstacles, rows, cols):
-    stack = [(start, [])]
-    visited = set([start])
-    while stack:
-        current, path = stack.pop()
-        if current == goal:
+    s = [(start, [])] # (position, path)
+    v = set([start])
+    while s is not None:
+        cur, path = s.pop()
+        # Path found
+        if cur == goal:
             return path
-        for direction in DIRECTIONS:
-            new_pos = (current[0] + direction[0], current[1] + direction[1])
-            if (0 <= new_pos[0] < rows and 0 <= new_pos[1] < cols and
-                new_pos not in obstacles and new_pos not in visited):
-                visited.add(new_pos)
-                stack.append((new_pos, path + [direction]))
+        for dir in DIRECTIONS:
+            new = (cur[0] + dir[0], cur[1] + dir[1])
+            if (0 <= new[0] < rows and 0 <= new[1] < cols and
+                new not in obstacles and new not in v):
+                v.add(new)
+                s.append((new, path + [dir]))
+    # No path found
+    return []
+
+# Recursive DLS for IDS (starts from start node):
+def dls(cur, goal, obstacles, rows, cols, depth, v, path):
+    # Path found
+    if cur == goal:
+        return path
+    if depth == 0:
+        return []
+    v.add(cur)
+    for dir in DIRECTIONS:
+        new = (cur[0] + dir[0], cur[1] + dir[1])
+        if (0 <= new[0] < rows and 0 <= new[1] < cols and new not in obstacles and new not in v):
+            m = dls(new, goal, obstacles, rows, cols, depth - 1, v, path + [dir])
+            if m != []:
+                return m
+    # No path found
     return []
 
 def ids(start, goal, obstacles, rows, cols):
-    def dls(node, depth, visited, path):
-        if node == goal:
-            return path
-        if depth == 0:
-            return None
-        visited.add(node)
-        for direction in DIRECTIONS:
-            new_pos = (node[0] + direction[0], node[1] + direction[1])
-            if (0 <= new_pos[0] < rows and 0 <= new_pos[1] < cols and
-                new_pos not in obstacles and new_pos not in visited):
-                result = dls(new_pos, depth - 1, visited, path + [direction])
-                if result is not None:
-                    return result
-        return None
     depth = 0
     while True:
-        visited = set()
-        result = dls(start, depth, visited, [])
-        if result is not None:
-            return result
+        v = set()
+        m = dls(start, goal, obstacles, rows, cols, depth, v, [])
+        if m != []:
+            return m
         depth += 1
 
 def ucs(start, goal, obstacles, rows, cols):
     pq = PriorityQueue()
-    pq.put((0, start, []))
-    visited = {}
+    pq.put((0, start, [])) # (cost, pos, path)
+    v = {}
     while not pq.empty():
-        cost, current, path = pq.get()
-        if current == goal:
+        cost, cur, path = pq.get()
+        # Path found
+        if cur == goal:
             return path
-        if current in visited and visited[current] <= cost:
+        # Skip if cheaper or equal cost path found
+        if cur in v and v[cur] <= cost:
             continue
-        visited[current] = cost
-        for direction in DIRECTIONS:
-            new_pos = (current[0] + direction[0], current[1] + direction[1])
-            if (0 <= new_pos[0] < rows and 0 <= new_pos[1] < cols and
-                new_pos not in obstacles):
-                pq.put((cost + 1, new_pos, path + [direction]))
+        v[cur] = cost
+        for dir in DIRECTIONS:
+            new = (cur[0] + dir[0], cur[1] + dir[1])
+            if (0 <= new[0] < rows and 0 <= new[1] < cols and new not in obstacles):
+                pq.put((cost + 1, new, path + [dir]))
+    # No path found
     return []
 
 # Used with Greedy Best-First Search
 def manhattan_distance(a, b):
+    # |x1 - y1| + |x2 - y2|
     return abs(a[0] - b[0]) + abs(a[1] - b[1])
 
 def greedy_bfs(start, goal, obstacles, rows, cols):
     pq = PriorityQueue()
-    pq.put((manhattan_distance(start, goal), start, []))
-    visited = set()
+    pq.put((manhattan_distance(start, goal), start, [])) # ()
+    v = set()
     while not pq.empty():
-        f, current, path = pq.get()
-        if current == goal:
+        f, cur, path = pq.get()
+        # Path found
+        if cur == goal:
             return path
-        if current in visited:
+        if cur in v:
             continue
-        visited.add(current)
-        for direction in DIRECTIONS:
-            new_pos = (current[0] + direction[0], current[1] + direction[1])
-            if (0 <= new_pos[0] < rows and 0 <= new_pos[1] < cols and
-                new_pos not in obstacles and new_pos not in visited):
-                pq.put((manhattan_distance(new_pos, goal), new_pos, path + [direction]))
+        v.add(cur)
+        for dir in DIRECTIONS:
+            new = (cur[0] + dir[0], cur[1] + dir[1])
+            if (0 <= new[0] < rows and 0 <= new[1] < cols and new not in obstacles and new not in v):
+                pq.put((manhattan_distance(new, goal), new, path + [dir]))
+    # No path found
     return []
 
 # Used with A* Search
@@ -133,19 +144,22 @@ def weighted_euclidean(pos, goal, weight=5):
 def astar(start, goal, obstacles, rows, cols, heuristic=weighted_euclidean):
     pq = PriorityQueue()
     pq.put((0, 0, start, []))  # (Heuristic, Cost, Position, Path)
-    visited = {}
+    v = {}
     while not pq.empty():
-        f, g, current, path = pq.get()
-        if current == goal:
+        f, g, cur, path = pq.get()
+        # Path found
+        if cur == goal:
             return path
-        if current in visited and visited[current] <= g:
+        # Skip if cheaper or equal cost path found
+        if cur in v and v[cur] <= g:
             continue
-        visited[current] = g
-        for direction in DIRECTIONS:
-            new_pos = (current[0] + direction[0], current[1] + direction[1])
-            if (0 <= new_pos[0] < rows and 0 <= new_pos[1] < cols and
-                new_pos not in obstacles):
-                new_g = g + 1
-                f = new_g + heuristic(new_pos, goal)
-                pq.put((f, new_g, new_pos, path + [direction]))
+        v[cur] = g
+        for dir in DIRECTIONS:
+            new = (cur[0] + dir[0], cur[1] + dir[1])
+            if (0 <= new[0] < rows and 0 <= new[1] < cols and
+                new not in obstacles):
+                gnew = g + 1
+                f = gnew + heuristic(new, goal)
+                pq.put((f, gnew, new, path + [dir]))
+    # No path found
     return []

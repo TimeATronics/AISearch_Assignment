@@ -50,7 +50,7 @@ snake2_pos = [ROWS - ROWS // 4, COLS - COLS // 4] if TWO_PLAYERS else None
 food_pos = None  # Set initially to None
 
 # Timer settings (Originally 30, set to 10 for plotting scores)
-TIME_LIMIT = 5
+TIME_LIMIT = 30
 start_time = time.time()
 
 # Setup Pygame window
@@ -221,7 +221,7 @@ while running:
 
     pygame.display.update()
     # Faster tick for faster gameplay used for plotting
-    clock.tick(20)
+    clock.tick(10)
 
     # Handle events
     for event in pygame.event.get():
